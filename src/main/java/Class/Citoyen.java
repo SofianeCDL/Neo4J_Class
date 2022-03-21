@@ -1,6 +1,9 @@
 package Class;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Citoyen {
     private final String nom;
@@ -19,6 +22,8 @@ public class Citoyen {
     private final String ville;
     private final String departement;
     private final String region;
+
+    private List<Citoyen> amis;
 
     public Citoyen(String nom,
                    String prenom,
@@ -45,6 +50,8 @@ public class Citoyen {
         this.ville              = ville;
         this.departement        = departement;
         this.region             = region;
+
+        this.amis               = new ArrayList<>();
     }
 
     public String getNom() {
@@ -93,5 +100,9 @@ public class Citoyen {
 
     public String getRegion() {
         return region;
+    }
+
+    public void ajouterAmis(Citoyen c) {
+        this.amis.add(c);
     }
 }

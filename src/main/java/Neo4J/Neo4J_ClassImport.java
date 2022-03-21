@@ -25,17 +25,17 @@ public class Neo4J_ClassImport {
 
         try (Transaction tx = graphDb.beginTx()) {
 
-            Citoyen cit = new Citoyen("kijehfi",
-                                    "kdfsjn",
+            Citoyen cit = new Citoyen("Doe",
+                                    "John",
                                         'M',
-                                        65,
-                                            LocalDate.of(1857, 7, 18),
-                            "Nantes",
-                                    1.75f,
-                                    "1 bis chemin des vignes du bourg",
-                                44100, "Nantes",
-                                        "Loire-Atltantique",
-                                    "Pays de la Loire" );
+                                        25,
+                                            LocalDate.of(1996, 7, 18),
+                            "Polyland",
+                                    1.85f,
+                                    "42 rue de la Vie",
+                                42000, "Polyland",
+                                        "Necrolimbe",
+                                    "Elden Ring" );
 
             Node citoyen = neo4J_ClassImport.createNodeCitoyen(tx, cit);
 
