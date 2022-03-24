@@ -7,6 +7,7 @@ import Class.Citoyen;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.Map;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -14,8 +15,15 @@ public class Neo4J_ClassImport {
 
     private static GraphDatabaseService graphDb;
     private static DatabaseManagementService managementService;
+    private int id;
 
+    public Neo4J_ClassImport () {
+        this.id = 1;
+    }
 
+    public int getId() {
+        return id;
+    }
 
     public static void main(String[] args) {
 
@@ -37,9 +45,34 @@ public class Neo4J_ClassImport {
                                         "Necrolimbe",
                                     "Elden Ring" );
 
-            Node citoyen = neo4J_ClassImport.createNodeCitoyen(tx, cit);
+            Citoyen cit2 = new Citoyen("Fouchard",
+                    "Jean-Heude",
+                    'F',
+                    94,
+                    LocalDate.of(1938, 11, 11),
+                    "Montcuq",
+                    1.1f,
+                    "1 ter rue de la Jonquille",
+                    54875, "Montcuq",
+                    "Loire-Atlantique",
+                    "Bretagne" );
 
-            System.out.println(neo4J_ClassImport.displayNodeCitoyen(citoyen));
+            cit.ajouterAmis(cit2);
+
+            //System.out.println(neo4J_ClassImport.getId());
+            Node citoyen = neo4J_ClassImport.createNodeCitoyen(tx, cit);
+            //System.out.println(neo4J_ClassImport.getId());
+            Node citoyen2 = neo4J_ClassImport.createNodeCitoyen(tx, cit2);
+
+            //System.out.println("id1 : " + neo4J_ClassImport.id + cit2.getUid());
+
+            neo4J_ClassImport.createRelationshipCitoyen(tx, cit);
+
+            //System.out.println(neo4J_ClassImport.displayNodeCitoyen(citoyen));
+            //System.out.println(neo4J_ClassImport.displayAllNode(tx));
+            //System.out.println(neo4J_ClassImport.findUserNodeCypher(tx, 1));
+            System.out.println(neo4J_ClassImport.displayRelationshipCitoyen(citoyen));
+
 
             neo4J_ClassImport.shutdownGraph();
 
@@ -69,7 +102,12 @@ public class Neo4J_ClassImport {
 
     public Node createNodeCitoyen(Transaction tx, Citoyen citoyen) {
 
-        Node nodeCitoyen = this.createNodes(tx, "id", 1);
+
+
+        Node nodeCitoyen = this.createNodes(tx, "uid",this.id);
+
+        citoyen.setUid(nodeCitoyen.getId());
+        //System.out.println("id2 : " + this.id++ + nodeCitoyen.getId());
 
         Node nodeLastNameCitoyen = this.createNodes(tx, "id", citoyen.getNom());
         this.createRelationShip(nodeCitoyen, nodeLastNameCitoyen, "lastname", "hisLastName", RelTypes.HAS_LASTNAME);
@@ -107,7 +145,55 @@ public class Neo4J_ClassImport {
         Node nodeRegionCitoyen = this.createNodes(tx, "id", citoyen.getRegion());
         this.createRelationShip(nodeCitoyen, nodeRegionCitoyen, "region", "hisRegion", RelTypes.REGION);
 
+        this.id++;
+
         return nodeCitoyen;
+    }
+
+    public void createRelationshipBetweenTwoCitoyen(Node c1, Node c2) {
+        this.createRelationShip(c1, c2, "knows", "knows", RelTypes.KNOWS);
+    }
+
+    public void createRelationshipCitoyen(Transaction tx, Citoyen citoyen) {
+        Node citoyenNode = tx.getNodeById(citoyen.getUid());
+
+        for (Citoyen c : citoyen.getAmis()) {
+            //System.out.println("id3 : " + c.getUid());
+            Node ci = tx.getNodeById(c.getUid());
+            //System.out.println(this.displayRelationshipCitoyen(ci));
+
+            this.createRelationshipBetweenTwoCitoyen(citoyenNode, ci);
+        }
+    }
+
+    public String findUserNodeCypher(Transaction tx, int id) {
+        StringBuilder rows = new StringBuilder();
+
+        Result result = tx.execute( "MATCH (n {uid: "+ id + "}) RETURN n, n.uid" );
+        while ( result.hasNext() )
+        {
+            //System.out.println("test");
+            Map<String,Object> row = result.next();
+
+            for ( Map.Entry<String,Object> column : row.entrySet() )
+            {
+                rows.append(column.getKey()).append(": ").append(column.getValue()).append("; ");
+            }
+            rows.append("\n");
+        }
+
+        return rows.toString();
+    }
+
+    public String displayAllNode(Transaction tx) {
+        StringBuilder output = new StringBuilder();
+
+        for (int i = 1; i <= this.id ; ++i) {
+            output.append(this.findUserNodeCypher(tx, i)).append("\n");
+        }
+
+        return output.toString();
+
     }
 
     /*public Citoyen createCitoyen(Node citoyen) {
@@ -126,6 +212,19 @@ public class Neo4J_ClassImport {
 
         for (Relationship relation: citoyen.getRelationships()) {
             str.append(relation.getEndNode().getProperty("id")).append("\n");
+        }
+
+        return str.toString();
+    }
+
+    public String displayRelationshipCitoyen(Node citoyen) {
+        StringBuilder str = new StringBuilder();
+
+        str.append(this.displayNodeCitoyen(citoyen)).append("\n\n");
+
+        for (Relationship relationship : citoyen.getRelationships(RelTypes.KNOWS)) {
+
+            str.append(this.displayNodeCitoyen(relationship.getEndNode())).append("\n\n");
         }
 
         return str.toString();

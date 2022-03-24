@@ -6,6 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Citoyen {
+
+    private long uid;
     private final String nom;
     private final String prenom;
 
@@ -52,6 +54,14 @@ public class Citoyen {
         this.region             = region;
 
         this.amis               = new ArrayList<>();
+    }
+
+    public long getUid() {
+        return uid;
+    }
+
+    public void setUid(long uid) {
+        this.uid = uid;
     }
 
     public String getNom() {
@@ -104,5 +114,9 @@ public class Citoyen {
 
     public void ajouterAmis(Citoyen c) {
         this.amis.add(c);
+    }
+
+    public List<Citoyen> getAmis() {
+        return amis;
     }
 }
