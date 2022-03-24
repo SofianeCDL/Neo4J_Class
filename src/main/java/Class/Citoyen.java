@@ -2,12 +2,13 @@ package Class;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class Citoyen {
 
-    private long uid;
+    private long uidNode;
+    private int uid;
+
     private final String nom;
     private final String prenom;
 
@@ -56,11 +57,19 @@ public class Citoyen {
         this.amis               = new ArrayList<>();
     }
 
-    public long getUid() {
+    public long getUidNode() {
+        return uidNode;
+    }
+
+    public void setUidNode(long uidNode) {
+        this.uidNode = uidNode;
+    }
+
+    public int getUid() {
         return uid;
     }
 
-    public void setUid(long uid) {
+    public void setUid(int uid) {
         this.uid = uid;
     }
 
