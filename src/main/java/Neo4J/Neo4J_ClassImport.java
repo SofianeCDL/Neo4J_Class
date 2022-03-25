@@ -2,21 +2,25 @@ package Neo4J;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.DatabaseManagementServiceBuilder;
 import org.neo4j.graphdb.*;
-import org.openjdk.jmh.annotations.Benchmark;
+import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.schema.Schema;
+import org.openjdk.jmh.annotations.*;
 import types.RelTypes;
 import Class.Citoyen;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
+@State(Scope.Benchmark)
 public class Neo4J_ClassImport {
 
     private static GraphDatabaseService graphDb;
     private static DatabaseManagementService managementService;
-    private int id;
+    private static int id;
 
     public Neo4J_ClassImport () {
         this.id = 1;
@@ -32,7 +36,14 @@ public class Neo4J_ClassImport {
 
         neo4J_ClassImport.connectionGraph();
 
+        /*try (Transaction tx = graphDb.beginTx()) {
+            neo4J_ClassImport.createIndexGraph(tx);
+            tx.commit();
+        }*/
+
         try (Transaction tx = graphDb.beginTx()) {
+
+
 
             //neo4J_ClassImport.deleteNodeCypher(tx);
 
@@ -90,6 +101,7 @@ public class Neo4J_ClassImport {
             //tx.execute( "MATCH (n:Citoyen {uid: 13451})-[r:KNOWS]-(m:Citoyen {uid: 12862}) DELETE r" );
 
             System.out.println(neo4J_ClassImport.displayRelationshipCitoyenCypher(tx, RelTypes.KNOWS));
+            System.out.println(neo4J_ClassImport.displayNodeCitoyenIndex(tx));
 
             neo4J_ClassImport.shutdownGraph();
 
@@ -98,7 +110,7 @@ public class Neo4J_ClassImport {
 
     //***************************************************************************************************
     //Server graph
-
+    
     public void connectionGraph() {
         Path databaseDirectory = Path.of("/Users/Artorias/Documents/JetBrains/LIB/neo4j-community-4.4.3-windows");
         managementService = new DatabaseManagementServiceBuilder( databaseDirectory ).build();
@@ -152,10 +164,10 @@ public class Neo4J_ClassImport {
 
 
 
-        Node nodeCitoyen = this.createNodesLabel(tx, "uid",this.id, Label.label("Citoyen"));
+        Node nodeCitoyen = this.createNodesLabel(tx, "uid", id, Label.label("Citoyen"));
 
         citoyen.setUidNode(nodeCitoyen.getId());
-        citoyen.setUid(this.id);
+        citoyen.setUid(id);
 
         //System.out.println("id2 : " + this.id++ + nodeCitoyen.getId());
 
@@ -195,7 +207,7 @@ public class Neo4J_ClassImport {
         Node nodeRegionCitoyen = this.createNodesNoLabel(tx, "id", citoyen.getRegion());
         this.createRelationShip(nodeCitoyen, nodeRegionCitoyen, "region", "hisRegion", RelTypes.REGION);
 
-        this.id++;
+        id++;
 
         return nodeCitoyen;
     }
@@ -217,6 +229,20 @@ public class Neo4J_ClassImport {
     }
 
     //***************************************************************************************************
+    //Index
+
+    public void createIndexGraph(Transaction tx) {
+        IndexDefinition usernamesIndex;
+        Schema schema = tx.schema();
+
+        usernamesIndex = schema.indexFor(Label.label("Citoyen"))
+                .on("uid")
+                .create();
+    }
+
+
+
+    //***************************************************************************************************
     //Finder
 
     public Result findNodeCitoyenCypherById(Transaction tx, int id) {
@@ -227,18 +253,21 @@ public class Neo4J_ClassImport {
         return tx.execute( "MATCH (n:Citoyen)-[:" + type + "]-(m:Citoyen) RETURN n, n.uid, m, m.uid" );
     }
 
+    public ResourceIterator<Node> findNodeCitoyenIndex(Transaction tx, Label label) {
+        return tx.findNodes(label);
+    }
+
     //***************************************************************************************************
     //Display
 
     public String displayAllNodeCypher(Transaction tx) {
         StringBuilder output = new StringBuilder();
 
-        for (int i = 1; i <= this.id ; ++i) {
+        for (int i = 1; i <= id ; ++i) {
             output.append(this.displayNodeCitoyenCypherById(tx, i)).append("\n");
         }
 
         return output.toString();
-
     }
 
     public String displayNodeCitoyen(Node citoyen) {
@@ -297,6 +326,20 @@ public class Neo4J_ClassImport {
         return rows.toString();
     }
 
+    public String displayNodeCitoyenIndex(Transaction tx) {
+        ResourceIterator<Node> citoyens = this.findNodeCitoyenIndex(tx, Label.label("Citoyen"));
+
+        StringBuilder str = new StringBuilder();
+
+        for (ResourceIterator<Node> it = citoyens; it.hasNext(); ) {
+            Node n = it.next();
+
+            str.append(this.displayRelationshipNodeCitoyen(n)).append("\n\n");
+        }
+
+        return str.toString();
+    }
+
     //***************************************************************************************************
     //Remove
 
@@ -312,11 +355,90 @@ public class Neo4J_ClassImport {
     //***************************************************************************************************
     //Benchmark
 
+    @Setup(Level.Trial)
+    public void initBenchmarkCypher() {
+
+        this.connectionGraph();
+
+        try (Transaction tx = graphDb.beginTx()) {
+
+            Citoyen cit = new Citoyen("Doe",
+                    "John",
+                    'M',
+                    25,
+                    LocalDate.of(1996, 7, 18),
+                    "Polyland",
+                    1.85f,
+                    "42 rue de la Vie",
+                    42000, "Polyland",
+                    "Necrolimbe",
+                    "Elden Ring");
+
+            Citoyen cit2 = new Citoyen("Fouchard",
+                    "Jean-Heude",
+                    'F',
+                    94,
+                    LocalDate.of(1938, 11, 11),
+                    "Montcuq",
+                    1.1f,
+                    "1 ter rue de la Jonquille",
+                    54875, "Montcuq",
+                    "Loire-Atlantique",
+                    "Bretagne");
+
+            Citoyen cit3 = new Citoyen("Fouchard",
+                    "Jean-Heude",
+                    'F',
+                    94,
+                    LocalDate.of(1938, 11, 11),
+                    "Montcuq",
+                    1.1f,
+                    "1 ter rue de la Jonquille",
+                    54875, "Montcuq",
+                    "Loire-Atlantique",
+                    "Bretagne");
+
+            cit.ajouterAmis(cit2);
+            cit2.ajouterAmis(cit3);
+
+            Node citoyen = this.createNodeCitoyen(tx, cit);
+            Node citoyen2 = this.createNodeCitoyen(tx, cit2);
+            Node citoyen3 = this.createNodeCitoyen(tx, cit3);
+
+            this.createRelationshipCitoyen(tx, cit);
+            this.createRelationshipCitoyen(tx, cit2);
+
+            tx.commit();
+        }
+    }
+
     @Benchmark
     public void benchmarkFinderCypher() {
         try (Transaction tx = graphDb.beginTx()) {
             this.findRelationshipCitoyenCypher(tx, RelTypes.KNOWS);
+
+            tx.commit();
         }
+    }
+
+    @Benchmark
+    public void benchmarkFinderIndex() {
+
+        /*try (Transaction tx = graphDb.beginTx()) {
+            this.createIndexGraph(tx);
+            tx.commit();
+        }*/
+
+        try (Transaction tx = graphDb.beginTx()) {
+            this.findNodeCitoyenIndex(tx, Label.label("Citoyen"));
+            tx.commit();
+        }
+
+    }
+
+    @TearDown(Level.Trial)
+    public void finalBenchmarkCypher() {
+        this.shutdownGraph();
     }
 }
 
