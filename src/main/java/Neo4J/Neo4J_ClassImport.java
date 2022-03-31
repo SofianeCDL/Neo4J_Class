@@ -10,8 +10,11 @@ import Class.Citoyen;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 
@@ -43,6 +46,8 @@ public class Neo4J_ClassImport {
 
         try (Transaction tx = graphDb.beginTx()) {
 
+            //System.out.println(neo4J_ClassImport.displayNodeCitoyenIndex(tx));
+            //System.out.println("=======================================================");
 
 
             //neo4J_ClassImport.deleteNodeCypher(tx);
@@ -87,25 +92,60 @@ public class Neo4J_ClassImport {
             cit2.ajouterAmis(cit3);
 
             //System.out.println(neo4J_ClassImport.getId());
-            Node citoyen = neo4J_ClassImport.createNodeCitoyen(tx, cit);
+            Node citoyen = neo4J_ClassImport.createNodeCitoyen2(tx, cit);
+            System.out.println("Citoyen 1 : " + citoyen.getId());
             //System.out.println(neo4J_ClassImport.getId());
-            Node citoyen2 = neo4J_ClassImport.createNodeCitoyen(tx, cit2);
+            Node citoyen2 = neo4J_ClassImport.createNodeCitoyen2(tx, cit2);
+            System.out.println("Citoyen 2 : " + citoyen2.getId());
 
-            Node citoyen3 = neo4J_ClassImport.createNodeCitoyen(tx, cit3);
+            Node citoyen3 = neo4J_ClassImport.createNodeCitoyen2(tx, cit3);
+            System.out.println("Citoyen 3 : " + citoyen3.getId());
+
+            Node citoyen4 = neo4J_ClassImport.createNodeCitoyen2(tx, cit3);
+            System.out.println("Citoyen 4 : " + citoyen4.getId());
 
             //System.out.println("id1 : " + neo4J_ClassImport.id + cit2.getUid());
 
-            neo4J_ClassImport.createRelationshipCitoyen(tx, cit);
-            neo4J_ClassImport.createRelationshipCitoyen(tx, cit2);
+            //neo4J_ClassImport.createRelationshipCitoyen(tx, cit);
+            //neo4J_ClassImport.createRelationshipCitoyen(tx, cit2);
+
+            System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 1, citoyen2));
+            System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 2, citoyen3));
+            System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 3, citoyen4));
+
+
+            System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
+
+            neo4J_ClassImport.removeRelationship(citoyen, 2);
+
+            System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
+
+            //System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 2, citoyen3));
+
+            //System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
 
             //tx.execute( "MATCH (n:Citoyen {uid: 13451})-[r:KNOWS]-(m:Citoyen {uid: 12862}) DELETE r" );
 
-            System.out.println(neo4J_ClassImport.displayRelationshipCitoyenCypher(tx, RelTypes.KNOWS));
-            System.out.println(neo4J_ClassImport.displayNodeCitoyenIndex(tx));
+            //System.out.println(neo4J_ClassImport.displayRelationshipCitoyenCypher(tx, RelTypes.KNOWS));
 
-            neo4J_ClassImport.shutdownGraph();
+
+            //System.out.println(neo4J_ClassImport.displayNodeCitoyenIndex(tx));
+
+            neo4J_ClassImport.removeNodes(tx, citoyen);
+            neo4J_ClassImport.removeNodes(tx, citoyen2);
+            neo4J_ClassImport.removeNodes(tx, citoyen3);
+            neo4J_ClassImport.removeNodes(tx, citoyen4);
+
+            neo4J_ClassImport.removeAllNodesCypher(tx);
+
+
+
 
         }
+
+        //neo4J_ClassImport.removeIndex();
+
+        neo4J_ClassImport.shutdownGraph();
     }
 
     //***************************************************************************************************
@@ -162,8 +202,6 @@ public class Neo4J_ClassImport {
 
     public Node createNodeCitoyen(Transaction tx, Citoyen citoyen) {
 
-
-
         Node nodeCitoyen = this.createNodesLabel(tx, "uid", id, Label.label("Citoyen"));
 
         citoyen.setUidNode(nodeCitoyen.getId());
@@ -212,9 +250,37 @@ public class Neo4J_ClassImport {
         return nodeCitoyen;
     }
 
+    public Node createNodeCitoyen2(Transaction tx, Citoyen citoyen) {
+
+        Node nodeCitoyen = this.createNodesLabel(tx, "uid", id, Label.label("Citoyen"));
+        nodeCitoyen.setProperty("lastname", citoyen.getNom());
+        nodeCitoyen.setProperty("firstname", citoyen.getPrenom());
+        nodeCitoyen.setProperty("sex", citoyen.getSexe());
+        nodeCitoyen.setProperty("age", citoyen.getAge());
+        nodeCitoyen.setProperty("birthday", citoyen.getDateDeNaissance());
+        nodeCitoyen.setProperty("birthcity", citoyen.getVilleDeNaissance());
+        nodeCitoyen.setProperty("size", citoyen.getTaille());
+        nodeCitoyen.setProperty("address", citoyen.getAdresse());
+        nodeCitoyen.setProperty("postalcode", citoyen.getCodePostale());
+        nodeCitoyen.setProperty("city", citoyen.getVille());
+        nodeCitoyen.setProperty("department", citoyen.getDepartement());
+        nodeCitoyen.setProperty("region", citoyen.getRegion());
+        nodeCitoyen.setProperty("city", citoyen.getVille());
+        nodeCitoyen.setProperty("city", citoyen.getVille());
+
+        citoyen.setUidNode(nodeCitoyen.getId());
+        citoyen.setUid(id);
+
+        id++;
+
+        return nodeCitoyen;
+    }
+
     public void createRelationshipBetweenTwoNodeCitoyen(Node c1, Node c2) {
         this.createRelationShip(c1, c2, "knows", "knows", RelTypes.KNOWS);
     }
+
+
 
     public void createRelationshipCitoyen(Transaction tx, Citoyen citoyen) {
         Node citoyenNode = tx.getNodeById(citoyen.getUidNode());
@@ -237,6 +303,7 @@ public class Neo4J_ClassImport {
 
         usernamesIndex = schema.indexFor(Label.label("Citoyen"))
                 .on("uid")
+                .withName("citoyens")
                 .create();
     }
 
@@ -284,7 +351,7 @@ public class Neo4J_ClassImport {
     public String displayRelationshipNodeCitoyen(Node citoyen) {
         StringBuilder str = new StringBuilder();
 
-        str.append(citoyen.getProperty("uid")).append("\n");
+        //str.append(citoyen.getProperty("uid")).append("\n");
 
         for (Relationship relationship : citoyen.getRelationships(RelTypes.KNOWS)) {
 
@@ -331,14 +398,16 @@ public class Neo4J_ClassImport {
 
         StringBuilder str = new StringBuilder();
 
-        for (ResourceIterator<Node> it = citoyens; it.hasNext(); ) {
-            Node n = it.next();
+        for (ResourceIterator<Node> iter = citoyens; iter.hasNext(); ) {
+            Node it = iter.next();
 
-            str.append(this.displayRelationshipNodeCitoyen(n)).append("\n\n");
+            str.append("Citoyen n°" + it.getProperty("uid")).append(this.displayRelationshipNodeCitoyen(it)).append("\n");
         }
 
         return str.toString();
     }
+
+
 
     //***************************************************************************************************
     //Remove
@@ -347,9 +416,93 @@ public class Neo4J_ClassImport {
         firstNode = tx.getNodeById(firstNode.getId());
         firstNode.delete();
     }
+    public void removeAllNodesCypher(Transaction tx) {
+        tx.execute( "MATCH (n) DETACH DELETE n" );
+    }
+
 
     public void removeRelationShip(Node firstNode, RelTypes relTypes) {
         firstNode.getSingleRelationship(relTypes, Direction.OUTGOING).delete();
+    }
+
+    public void removeIndex() {
+        try ( Transaction tx = graphDb.beginTx() )
+        {
+            IndexDefinition usernamesIndex = tx.schema().getIndexByName( "citoyens" );
+            usernamesIndex.drop();
+            tx.commit();
+        }
+    }
+
+    //***************************************************************************************************
+    //Relationship
+
+    public String createRelationshipHierachyBetweenTwoNodeCitoyen(Node c1, int num, Node c2) {
+        boolean existing = false;
+        for (Relationship r: c1.getRelationships(RelTypes.KNOWS)) {
+            if (r.getProperty("classement") instanceof Integer) {
+                if ( r.getProperty("classement").equals(num))
+                    existing = true;
+            }
+        }
+
+        if (!existing) {
+            this.createRelationShip(c1, c2, "classement", num, RelTypes.KNOWS);
+            return "Reussi";
+        } else {
+            this.insertionRelationship(c1, c2, num);
+            return "Insertion";
+        }
+    }
+
+    public Relationship searchRelationship(Node c, int num) {
+        for (Relationship r: c.getRelationships(RelTypes.KNOWS)) {
+            if (r.getProperty("classement").equals(num)) {
+                return r;
+            }
+        }
+
+        return null;
+    }
+
+    public void insertionRelationship(Node c1, Node c2, int num) {
+        List<Relationship> listRelationship = StreamSupport.stream(c1.getRelationships(RelTypes.KNOWS).spliterator(), false).collect(Collectors.toList());
+        List<Relationship> subListRelationship = listRelationship.subList(num - 1, listRelationship.size());
+
+        for (Relationship r: subListRelationship) {
+            int property = (int) r.getProperty("classement");
+            r.setProperty("classement", property+1);
+        }
+
+        this.createRelationShip(c1, c2, "classement", num, RelTypes.KNOWS);
+    }
+
+    public void removeRelationship(Node c, int num) {
+        Relationship r = this.searchRelationship(c, num);
+
+        if (r != null) {
+            r.delete();
+        } else {
+            return;
+        }
+
+        List<Relationship> listRelationship = StreamSupport.stream(c.getRelationships(RelTypes.KNOWS).spliterator(), false).collect(Collectors.toList());
+
+        List<Relationship> subListRelationship = listRelationship.subList(num - 1, listRelationship.size());
+
+        for (Relationship rs: subListRelationship) {
+            int property = (int) rs.getProperty("classement");
+            rs.setProperty("classement", property-1);
+        }
+    }
+
+    public String displayRelationShip(Node c) {
+        StringBuilder str = new StringBuilder();
+        for(Relationship r: c.getRelationships(RelTypes.KNOWS)) {
+            str.append("Classement : ").append(r.getProperty("classement")).append(" - id : ").append(r.getEndNode().getId()).append("\n");
+        }
+
+        return str.toString();
     }
 
     //***************************************************************************************************
