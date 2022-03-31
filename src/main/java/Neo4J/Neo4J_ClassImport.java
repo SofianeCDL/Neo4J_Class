@@ -69,7 +69,7 @@ public class Neo4J_ClassImport {
                     'F',
                     94,
                     LocalDate.of(1938, 11, 11),
-                    "Montcuq",
+                    "Nice",
                     1.1f,
                     "1 ter rue de la Jonquille",
                     54875, "Montcuq",
@@ -81,7 +81,7 @@ public class Neo4J_ClassImport {
                     'F',
                     94,
                     LocalDate.of(1938, 11, 11),
-                    "Montcuq",
+                    "Paris",
                     1.1f,
                     "1 ter rue de la Jonquille",
                     54875, "Montcuq",
@@ -91,10 +91,9 @@ public class Neo4J_ClassImport {
             cit.ajouterAmis(cit2);
             cit2.ajouterAmis(cit3);
 
-            //System.out.println(neo4J_ClassImport.getId());
             Node citoyen = neo4J_ClassImport.createNodeCitoyen2(tx, cit);
             System.out.println("Citoyen 1 : " + citoyen.getId());
-            //System.out.println(neo4J_ClassImport.getId());
+
             Node citoyen2 = neo4J_ClassImport.createNodeCitoyen2(tx, cit2);
             System.out.println("Citoyen 2 : " + citoyen2.getId());
 
@@ -104,32 +103,15 @@ public class Neo4J_ClassImport {
             Node citoyen4 = neo4J_ClassImport.createNodeCitoyen2(tx, cit3);
             System.out.println("Citoyen 4 : " + citoyen4.getId());
 
-            //System.out.println("id1 : " + neo4J_ClassImport.id + cit2.getUid());
-
-            //neo4J_ClassImport.createRelationshipCitoyen(tx, cit);
-            //neo4J_ClassImport.createRelationshipCitoyen(tx, cit2);
-
             System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 1, citoyen2));
             System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 2, citoyen3));
             System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 3, citoyen4));
-
 
             System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
 
             neo4J_ClassImport.removeRelationship(citoyen, 2);
 
             System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
-
-            //System.out.println(neo4J_ClassImport.createRelationshipHierachyBetweenTwoNodeCitoyen(citoyen, 2, citoyen3));
-
-            //System.out.println(neo4J_ClassImport.displayRelationShip(citoyen));
-
-            //tx.execute( "MATCH (n:Citoyen {uid: 13451})-[r:KNOWS]-(m:Citoyen {uid: 12862}) DELETE r" );
-
-            //System.out.println(neo4J_ClassImport.displayRelationshipCitoyenCypher(tx, RelTypes.KNOWS));
-
-
-            //System.out.println(neo4J_ClassImport.displayNodeCitoyenIndex(tx));
 
             neo4J_ClassImport.removeNodes(tx, citoyen);
             neo4J_ClassImport.removeNodes(tx, citoyen2);
@@ -142,8 +124,6 @@ public class Neo4J_ClassImport {
 
 
         }
-
-        //neo4J_ClassImport.removeIndex();
 
         neo4J_ClassImport.shutdownGraph();
     }
